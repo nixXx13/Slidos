@@ -3,7 +3,7 @@ import TextElement from './TextElement'
 import TableElement from './TableElement'
 import CodeElement from './CodeElement'
 
-export default function SlideElement({ element, locked, onUpdate, onDelete }) {
+export default function SlideElement({ element, locked, onUpdate, onDelete, onMoveUp, onMoveDown }) {
   const renderElement = () => {
     switch (element.type) {
       case 'text':
@@ -21,15 +21,31 @@ export default function SlideElement({ element, locked, onUpdate, onDelete }) {
     <div className="relative group">
       {renderElement()}
 
-      {/* Delete button — only when page is unlocked (locked=false) */}
+      {/* Controls — only when page is unlocked */}
       {!locked && (
-        <div className="absolute bottom-full right-0 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10">
+        <div className="absolute bottom-full right-0 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 flex items-center gap-1">
+          <button
+            onClick={onMoveUp}
+            disabled={!onMoveUp}
+            title="Move up"
+            className="px-2 py-1 rounded-md text-xs bg-white text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 border border-gray-200 shadow-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ↑
+          </button>
+          <button
+            onClick={onMoveDown}
+            disabled={!onMoveDown}
+            title="Move down"
+            className="px-2 py-1 rounded-md text-xs bg-white text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 border border-gray-200 shadow-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ↓
+          </button>
           <button
             onClick={onDelete}
             title="Delete element"
-            className="px-2 py-1 rounded text-xs bg-gray-800/90 text-gray-600 hover:text-red-400 hover:bg-gray-700 transition-colors"
+            className="px-2 py-1 rounded-md text-xs bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 border border-gray-200 shadow-sm transition-colors"
           >
-            ✕
+            ✕ Remove
           </button>
         </div>
       )}

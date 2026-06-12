@@ -49,6 +49,22 @@ export default function App() {
     setCurrentIndex(slides.length)
   }
 
+  const duplicateCurrentSlide = () => {
+    const source = slides[currentIndex]
+    const copy = {
+      ...source,
+      id: genId(),
+      title: `${source.title} (copy)`,
+      elements: source.elements.map((el) => ({ ...el, id: genId() })),
+    }
+    setSlides((prev) => {
+      const next = [...prev]
+      next.splice(currentIndex + 1, 0, copy)
+      return next
+    })
+    setCurrentIndex(currentIndex + 1)
+  }
+
   const deleteCurrentSlide = () => {
     if (slides.length === 1) return
     const newIndex = Math.min(currentIndex, slides.length - 2)
@@ -83,9 +99,10 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 text-gray-100 overflow-hidden">
+    <div className="flex flex-col h-screen bg-slate-100 text-gray-900 overflow-hidden">
       <Toolbar
         onAddSlide={addSlide}
+        onDuplicateSlide={duplicateCurrentSlide}
         onDeleteSlide={deleteCurrentSlide}
         onExport={exportJSON}
         onImport={importJSON}
