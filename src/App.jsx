@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import SlideView from './components/SlideView'
 import Navigation from './components/Navigation'
 import Toolbar from './components/Toolbar'
+import ThumbnailPanel from './components/ThumbnailPanel'
 import { defaultSlides } from './utils/defaultSlides'
 
 const genId = () => Math.random().toString(36).slice(2, 10)
@@ -66,6 +67,21 @@ export default function App() {
     setCurrentIndex(currentIndex + 1)
   }
 
+  const reorderSlides = (fromIndex, toIndex) => {
+    setSlides((prev) => {
+      const next = [...prev]
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved)
+      return next
+    })
+    setCurrentIndex((ci) => {
+      if (ci === fromIndex) return toIndex
+      if (fromIndex < ci && toIndex >= ci) return ci - 1
+      if (fromIndex > ci && toIndex <= ci) return ci + 1
+      return ci
+    })
+  }
+
   const deleteCurrentSlide = () => {
     if (slides.length === 1) return
     const newIndex = Math.min(currentIndex, slides.length - 2)
@@ -119,6 +135,15 @@ export default function App() {
           onUpdate={(updated) => updateSlide(currentIndex, updated)}
         />
       </div>
+
+      {!locked && (
+        <ThumbnailPanel
+          slides={slides}
+          currentIndex={currentIndex}
+          onNavigate={setCurrentIndex}
+          onReorder={reorderSlides}
+        />
+      )}
 
       <Navigation
         current={currentIndex}
