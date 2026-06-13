@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 
-export default function Toolbar({ onAddSlide, onDuplicateSlide, onDeleteSlide, onExport, onImport, slideCount }) {
+export default function Toolbar({ onAddSlide, onDuplicateSlide, onDeleteSlide, onExport, onImport, slideCount, locked, onToggleLock }) {
   const fileInputRef = useRef()
 
   return (
@@ -45,6 +45,17 @@ export default function Toolbar({ onAddSlide, onDuplicateSlide, onDeleteSlide, o
             }
           }}
         />
+        <button
+          onClick={onToggleLock}
+          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
+            locked
+              ? 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-800'
+              : 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100'
+          }`}
+          title={locked ? 'Unlock to edit' : 'Lock slides'}
+        >
+          {locked ? '🔒 Locked' : '🔓 Editing'}
+        </button>
         <button
           onClick={() => fileInputRef.current.click()}
           className="px-3 py-1.5 rounded-md bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors text-xs font-medium"

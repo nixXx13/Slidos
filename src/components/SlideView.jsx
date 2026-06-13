@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import SlideElement from './SlideElement'
 
 const genId = () => Math.random().toString(36).slice(2, 10)
@@ -19,15 +19,8 @@ const NEW_ELEMENT = {
   }),
 }
 
-export default function SlideView({ slide, onUpdate }) {
+export default function SlideView({ slide, locked, onUpdate }) {
   const [editingTitle, setEditingTitle] = useState(false)
-  const [pageUnlocked, setPageUnlocked] = useState(false)
-
-  useEffect(() => {
-    setPageUnlocked(false)
-  }, [slide.id])
-
-  const togglePageLock = () => setPageUnlocked((v) => !v)
 
   const updateElement = (id, updated) =>
     onUpdate({ ...slide, elements: slide.elements.map((el) => (el.id === id ? updated : el)) })
@@ -53,23 +46,9 @@ export default function SlideView({ slide, onUpdate }) {
       {/* Slide card */}
       <div className="relative w-full max-w-4xl h-full bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07),0_1px_4px_rgba(0,0,0,0.04)] flex flex-col overflow-hidden border border-gray-100">
 
-        {/* Page-level lock button */}
-        <button
-          onClick={togglePageLock}
-          title={pageUnlocked ? 'Lock slide' : 'Unlock to edit'}
-          className={`absolute top-4 right-4 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            pageUnlocked
-              ? 'bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100'
-              : 'bg-gray-50 text-gray-400 border border-gray-200 hover:text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <span>{pageUnlocked ? '🔓' : '🔒'}</span>
-          <span>{pageUnlocked ? 'Editing' : 'Locked'}</span>
-        </button>
-
         {/* Title */}
         <div className="px-10 pt-8 pb-4 flex-shrink-0 border-b border-gray-100">
-          {editingTitle && pageUnlocked ? (
+          {editingTitle && !locked ? (
             <input
               autoFocus
               value={slide.title}
@@ -80,8 +59,8 @@ export default function SlideView({ slide, onUpdate }) {
             />
           ) : (
             <h1
-              className={`text-3xl font-semibold text-gray-900 pr-24 ${pageUnlocked ? 'cursor-text hover:text-indigo-600 transition-colors' : ''}`}
-              onClick={() => pageUnlocked && setEditingTitle(true)}
+              className={`text-3xl font-semibold text-gray-900 ${!locked ? 'cursor-text hover:text-indigo-600 transition-colors' : ''}`}
+              onClick={() => !locked && setEditingTitle(true)}
             >
               {slide.title || <span className="text-gray-300 font-normal italic">Untitled slide</span>}
             </h1>
@@ -94,7 +73,7 @@ export default function SlideView({ slide, onUpdate }) {
             <SlideElement
               key={element.id}
               element={element}
-              locked={!pageUnlocked}
+              locked={locked}
               onUpdate={(updated) => updateElement(element.id, updated)}
               onDelete={() => deleteElement(element.id)}
               onMoveUp={i > 0 ? () => moveElement(element.id, -1) : null}
@@ -103,7 +82,7 @@ export default function SlideView({ slide, onUpdate }) {
           ))}
 
           {/* Add element row — only when unlocked */}
-          {pageUnlocked && (
+          {!locked && (
             <div className="flex items-center gap-2 pt-2 group">
               <div className="flex-1 h-px bg-gray-100 group-hover:bg-gray-200 transition-colors" />
               <div className="flex gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">

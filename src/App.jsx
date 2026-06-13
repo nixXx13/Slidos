@@ -9,6 +9,7 @@ const genId = () => Math.random().toString(36).slice(2, 10)
 export default function App() {
   const [slides, setSlides] = useState(defaultSlides)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [locked, setLocked] = useState(true)
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => Math.min(i + 1, slides.length - 1))
@@ -107,11 +108,14 @@ export default function App() {
         onExport={exportJSON}
         onImport={importJSON}
         slideCount={slides.length}
+        locked={locked}
+        onToggleLock={() => setLocked((v) => !v)}
       />
 
       <div className="flex-1 overflow-hidden">
         <SlideView
           slide={slides[currentIndex]}
+          locked={locked}
           onUpdate={(updated) => updateSlide(currentIndex, updated)}
         />
       </div>
