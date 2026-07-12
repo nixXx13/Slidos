@@ -1,9 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
 import { runJavaScript } from '../utils/codeRunner'
 import { usePyodide } from '../hooks/usePyodide'
+import { compileReact, buildIframeSrc } from '../utils/reactRunner'
 
-const LANGUAGES = ['javascript', 'typescript', 'python']
+const LANGUAGES = ['javascript', 'typescript', 'python', 'react']
 
 const OVERREACT_THEME = {
   base: 'vs',
@@ -22,12 +23,50 @@ export default function CodeElement({ element, locked, onUpdate }) {
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
   const [running, setRunning] = useState(false)
+  const [previewSrc, setPreviewSrc] = useState('')
+  const [logs, setLogs] = useState([])
+  const [splitPercent, setSplitPercent] = useState(50)
+  const iframeRef = useRef(null)
+  const logsEndRef = useRef(null)
+  const splitContainerRef = useRef(null)
+
+  const onSplitDragStart = useCallback((e) => {
+    e.preventDefault()
+    const container = splitContainerRef.current
+    if (!container) return
+    const { left, width } = container.getBoundingClientRect()
+
+    const onMove = (e) => {
+      const pct = Math.min(80, Math.max(20, ((e.clientX - left) / width) * 100))
+      setSplitPercent(pct)
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [])
   const [editorHeight, setEditorHeight] = useState(element.editorHeight ?? 130)
   const dragStartY = useRef(null)
   const dragStartHeight = useRef(null)
   const themeRegistered = useRef(false)
   const editorInstanceRef = useRef(null)
+  const { loading: pyLoading, runPython } = usePyodide()
 
+  const isReact = element.language === 'react'
+
+  // Listen for console messages relayed from the sandboxed iframe
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type !== 'console') return
+      if (iframeRef.current && e.source !== iframeRef.current.contentWindow) return
+      setLogs((prev) => [...prev, { level: e.data.level, text: e.data.args.join(' ') }])
+      logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
   const collapsed = element.collapsed ?? true
 
   const setCollapsed = (val) => {
@@ -42,7 +81,6 @@ export default function CodeElement({ element, locked, onUpdate }) {
       onUpdate({ ...element, editorHeight: h })
     }
   }
-  const { loading: pyLoading, runPython } = usePyodide()
 
   const onResizeStart = useCallback((e) => {
     e.preventDefault()
@@ -68,16 +106,28 @@ export default function CodeElement({ element, locked, onUpdate }) {
     setRunning(true)
     setOutput('')
     setError('')
+    setPreviewSrc('')
+    setLogs([])
 
     try {
-      let result
-      if (element.language === 'python') {
-        result = await runPython(element.code)
+      if (isReact) {
+        const { code: compiled, error: compileError } = await compileReact(element.code)
+        if (compileError) {
+          setError(compileError)
+        } else {
+          setPreviewSrc(buildIframeSrc(compiled))
+          // Expand if collapsed so user sees the preview
+          if (collapsed) setCollapsed(false)
+        }
+      } else if (element.language === 'python') {
+        const result = await runPython(element.code)
+        setOutput(result.output ?? '')
+        setError(result.error ?? '')
       } else {
-        result = await runJavaScript(element.code)
+        const result = await runJavaScript(element.code)
+        setOutput(result.output ?? '')
+        setError(result.error ?? '')
       }
-      setOutput(result.output ?? '')
-      setError(result.error ?? '')
     } catch (e) {
       setError(e.message)
     } finally {
@@ -88,7 +138,8 @@ export default function CodeElement({ element, locked, onUpdate }) {
   const isRunning = running || (element.language === 'python' && pyLoading)
 
   const monacoLang =
-    element.language === 'typescript' ? 'typescript'
+    isReact ? 'javascript'
+    : element.language === 'typescript' ? 'typescript'
     : element.language === 'python' ? 'python'
     : 'javascript'
 
@@ -141,7 +192,7 @@ export default function CodeElement({ element, locked, onUpdate }) {
               className="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
               title="Resize editor to fit all code"
             >
-              Fit Text
+              Fit
             </button>
           )}
           <button
@@ -149,7 +200,7 @@ export default function CodeElement({ element, locked, onUpdate }) {
             className="px-2 py-1 text-xs rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
             title={collapsed ? 'Expand' : 'Collapse'}
           >
-            {collapsed ? 'Collapsed' : 'Expanded'}
+            {collapsed ? 'Expand' : 'Collapse'}
           </button>
           <button
             onClick={run}
@@ -165,32 +216,120 @@ export default function CodeElement({ element, locked, onUpdate }) {
         </div>
       </div>
 
-      {/* Editor */}
+      {/* Editor + optional React preview side panel */}
       {!collapsed && (
         <>
-          <Editor
-            height={editorHeight}
-            language={monacoLang}
-            value={element.code}
-            onChange={locked ? undefined : (v) => onUpdate({ ...element, code: v ?? '' })}
-            beforeMount={handleBeforeMount}
-            onMount={handleMount}
-            options={{
-              readOnly: locked,
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              fontSize: 12,
-              lineNumbers: 'on',
-              wordWrap: 'on',
-              renderLineHighlight: locked ? 'none' : 'gutter',
-              folding: false,
-              contextmenu: !locked,
-              overviewRulerLanes: 0,
-              scrollbar: { verticalScrollbarSize: 4, horizontalScrollbarSize: 4 },
-              automaticLayout: true,
-              padding: { top: 8, bottom: 8 },
-            }}
-          />
+          <div ref={splitContainerRef} className="flex">
+            {/* Editor */}
+            <div style={isReact ? { width: `${splitPercent}%` } : { width: '100%' }}>
+              <Editor
+                height={editorHeight}
+                language={monacoLang}
+                value={element.code}
+                onChange={locked ? undefined : (v) => onUpdate({ ...element, code: v ?? '' })}
+                beforeMount={handleBeforeMount}
+                onMount={handleMount}
+                options={{
+                  readOnly: locked,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 12,
+                  lineNumbers: 'on',
+                  wordWrap: 'on',
+                  renderLineHighlight: locked ? 'none' : 'gutter',
+                  folding: false,
+                  contextmenu: !locked,
+                  overviewRulerLanes: 0,
+                  scrollbar: { verticalScrollbarSize: 4, horizontalScrollbarSize: 4 },
+                  automaticLayout: true,
+                  padding: { top: 8, bottom: 8 },
+                }}
+              />
+            </div>
+
+            {/* Vertical drag handle */}
+            {isReact && (
+              <div
+                onMouseDown={onSplitDragStart}
+                className="w-1 flex-shrink-0 bg-gray-200 hover:bg-indigo-400 cursor-col-resize transition-colors group/vsplit"
+                title="Drag to resize"
+              />
+            )}
+
+            {/* React preview panel */}
+            {isReact && (
+              <div className="flex flex-col bg-white" style={{ width: `${100 - splitPercent}%`, height: editorHeight }}>
+                <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                  <span className="text-xs text-gray-400 font-medium">Preview</span>
+                  {previewSrc && (
+                    <button
+                      onClick={() => setPreviewSrc('')}
+                      className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Clear preview"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {previewSrc ? (
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={previewSrc}
+                    sandbox="allow-scripts"
+                    className="border-none w-full"
+                    style={{ height: Math.max(60, editorHeight - 120) }}
+                    title="React preview"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center text-gray-300 gap-2" style={{ height: Math.max(60, editorHeight - 120) }}>
+                    <div>
+                      <div className="text-2xl text-center mb-1">⚛</div>
+                      <p className="text-xs text-center px-4 leading-relaxed">
+                        Click <span className="font-medium text-gray-400">▶ Run</span> to render
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Console panel */}
+                <div className="flex-shrink-0 border-t border-gray-200 bg-gray-100 h-[120px] flex flex-col">
+                  <div className="flex items-center justify-between px-3 py-1 border-b border-gray-200 flex-shrink-0">
+                    <span className="text-xs text-gray-400 font-mono">console</span>
+                    {logs.length > 0 && (
+                      <button
+                        onClick={() => setLogs([])}
+                        className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Clear console"
+                      >
+                        clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-0.5 bg-white">
+                    {logs.length === 0 ? (
+                      <span className="text-xs text-gray-400 font-mono">No output</span>
+                    ) : (
+                      logs.map((log, i) => (
+                        <div key={i} className={`text-xs font-mono whitespace-pre-wrap break-all ${
+                          log.level === 'error' ? 'text-red-500'
+                          : log.level === 'warn' ? 'text-yellow-600'
+                          : log.level === 'info' ? 'text-blue-500'
+                          : 'text-gray-700'
+                        }`}>
+                          {log.level !== 'log' && (
+                            <span className="opacity-50 mr-1">[{log.level}]</span>
+                          )}
+                          {log.text}
+                        </div>
+                      ))
+                    )}
+                    <div ref={logsEndRef} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Drag-to-resize handle */}
           <div
             onMouseDown={onResizeStart}
@@ -202,8 +341,8 @@ export default function CodeElement({ element, locked, onUpdate }) {
         </>
       )}
 
-      {/* Output */}
-      {(output || error) && (
+      {/* Text/Python output — not shown for react */}
+      {!isReact && (output || error) && (
         <div className="border-t border-gray-200 bg-white text-xs font-mono">
           <div className="px-3 py-1 text-gray-400 bg-gray-50 border-b border-gray-100 text-xs font-sans font-medium">
             Output
@@ -218,6 +357,15 @@ export default function CodeElement({ element, locked, onUpdate }) {
               {error}
             </pre>
           )}
+        </div>
+      )}
+
+      {/* React compile error */}
+      {isReact && error && (
+        <div className="border-t border-gray-200 bg-white">
+          <pre className="px-4 py-3 text-red-500 text-xs whitespace-pre-wrap font-mono overflow-x-auto max-h-28 overflow-y-auto">
+            {error}
+          </pre>
         </div>
       )}
     </div>

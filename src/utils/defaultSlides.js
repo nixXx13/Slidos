@@ -64,6 +64,58 @@ console.log('\\nFib(40) =', fib(40))`,
   },
   {
     id: id(),
+    title: 'Live React Demo',
+    elements: [
+      {
+        id: id(),
+        type: 'text',
+        content: 'Select <strong>react</strong> as the language, write a component, and click ▶ Run to see it rendered live in the side panel.',
+      },
+      {
+        id: id(),
+        type: 'code',
+        language: 'react',
+        code: `function Counter() {
+  const [count, setCount] = React.useState(0)
+  const [color, setColor] = React.useState('#6366f1')
+
+  return (
+    <div style={{ fontFamily: 'system-ui', padding: '24px', maxWidth: 320 }}>
+      <h2 style={{ color, marginTop: 0, fontSize: 28, fontWeight: 700 }}>
+        Count: {count}
+      </h2>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => setCount(c => c - 1)}
+          style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb',
+            background: '#f9fafb', cursor: 'pointer', fontSize: 18 }}
+        >−</button>
+        <button
+          onClick={() => setCount(c => c + 1)}
+          style={{ padding: '8px 16px', borderRadius: 8, border: 'none',
+            background: color, color: '#fff', cursor: 'pointer', fontSize: 18, fontWeight: 600 }}
+        >+</button>
+        <button
+          onClick={() => setCount(0)}
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
+            background: '#f9fafb', cursor: 'pointer', fontSize: 13, color: '#6b7280' }}
+        >Reset</button>
+      </div>
+      <label style={{ fontSize: 13, color: '#6b7280' }}>
+        Accent color:{' '}
+        <input type="color" value={color} onChange={e => setColor(e.target.value)}
+          style={{ marginLeft: 8, cursor: 'pointer' }} />
+      </label>
+    </div>
+  )
+}
+
+export default Counter`,
+      },
+    ],
+  },
+  {
+    id: id(),
     title: 'Live Code Demo — Python',
     elements: [
       {
