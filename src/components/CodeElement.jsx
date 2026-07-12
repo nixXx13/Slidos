@@ -26,9 +26,15 @@ export default function CodeElement({ element, locked, onUpdate }) {
   const [previewSrc, setPreviewSrc] = useState('')
   const [logs, setLogs] = useState([])
   const [splitPercent, setSplitPercent] = useState(50)
+  const [consoleHeight, setConsoleHeight] = useState(120)
+  const [editorHeight, setEditorHeight] = useState(element.editorHeight ?? 130)
   const iframeRef = useRef(null)
   const logsEndRef = useRef(null)
   const splitContainerRef = useRef(null)
+  const dragStartY = useRef(null)
+  const dragStartHeight = useRef(null)
+  const themeRegistered = useRef(false)
+  const editorInstanceRef = useRef(null)
 
   const onSplitDragStart = useCallback((e) => {
     e.preventDefault()
@@ -47,11 +53,22 @@ export default function CodeElement({ element, locked, onUpdate }) {
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
   }, [])
-  const [editorHeight, setEditorHeight] = useState(element.editorHeight ?? 130)
-  const dragStartY = useRef(null)
-  const dragStartHeight = useRef(null)
-  const themeRegistered = useRef(false)
-  const editorInstanceRef = useRef(null)
+
+  const onConsoleDragStart = useCallback((e) => {
+    e.preventDefault()
+    const startY = e.clientY
+    const startConsoleHeight = consoleHeight
+    const onMove = (e) => {
+      const delta = startY - e.clientY
+      setConsoleHeight(Math.min(editorHeight - 60, Math.max(32, startConsoleHeight + delta)))
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [consoleHeight, editorHeight])
   const { loading: pyLoading, runPython } = usePyodide()
 
   const isReact = element.language === 'react'
@@ -276,12 +293,11 @@ export default function CodeElement({ element, locked, onUpdate }) {
                     ref={iframeRef}
                     srcDoc={previewSrc}
                     sandbox="allow-scripts"
-                    className="border-none w-full"
-                    style={{ height: Math.max(60, editorHeight - 120) }}
+                    className="border-none w-full flex-1 min-h-0"
                     title="React preview"
                   />
                 ) : (
-                  <div className="flex items-center justify-center text-gray-300 gap-2" style={{ height: Math.max(60, editorHeight - 120) }}>
+                  <div className="flex-1 min-h-0 flex items-center justify-center text-gray-300">
                     <div>
                       <div className="text-2xl text-center mb-1">⚛</div>
                       <p className="text-xs text-center px-4 leading-relaxed">
@@ -291,8 +307,18 @@ export default function CodeElement({ element, locked, onUpdate }) {
                   </div>
                 )}
 
+                {/* Preview / console drag handle */}
+                <div
+                  onMouseDown={onConsoleDragStart}
+                  className="h-1 flex-shrink-0 bg-gray-200 hover:bg-indigo-400 cursor-ns-resize transition-colors"
+                  title="Drag to resize console"
+                />
+
                 {/* Console panel */}
-                <div className="flex-shrink-0 border-t border-gray-200 bg-gray-100 h-[120px] flex flex-col">
+                <div
+                  className="flex-shrink-0 bg-gray-100 flex flex-col"
+                  style={{ height: consoleHeight }}
+                >
                   <div className="flex items-center justify-between px-3 py-1 border-b border-gray-200 flex-shrink-0">
                     <span className="text-xs text-gray-400 font-mono">console</span>
                     {logs.length > 0 && (
