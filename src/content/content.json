@@ -371,10 +371,10 @@
       {
         "id": "swn228gi",
         "type": "code",
-        "language": "javascript",
-        "code": "function App() {\n  const [count, setCount] = useState(0);\n\n  useEffect(() => {\n    console.log(`count changed to ${count}`);\n  }, [count]);\n\n  return (\n    <button \n      onClick={() => setCount(count + 1)}\n    >\n      {`I've been clicked ${count} time(s)`}\n    </button>\n  );\n}",
+        "language": "react",
+        "code": "export default function App() {\n  const [count, setCount] = useState(0);\n\n  useEffect(() => {\n    console.log(`count changed to ${count}`);\n  }, [count]);\n\n  const handleOnClick = (count) => {\n    console.log(`setting count to ${count + 1}`);\n    setCount(count + 1)\n  }\n\n  console.log(`rendering button with ${count}`);\n  return (\n    <div>\n      <h3> Clicks counter! </h3>\n\n      <button \n        onClick={() => handleOnClick(count)}\n      >\n        {`I've been clicked ${count} time(s)`}\n      </button>\n    </div>\n  );\n}",
         "collapsed": false,
-        "editorHeight": 287
+        "editorHeight": 414
       },
       {
         "id": "uv1foh2u",
