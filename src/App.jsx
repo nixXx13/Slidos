@@ -4,11 +4,16 @@ import Navigation from './components/Navigation'
 import Toolbar from './components/Toolbar'
 import ThumbnailPanel from './components/ThumbnailPanel'
 import { defaultSlides } from './utils/defaultSlides'
+import contentSlides from './content/content.json'
 
 const genId = () => Math.random().toString(36).slice(2, 10)
 
+const initialSlides = Array.isArray(contentSlides) && contentSlides.length > 0
+  ? contentSlides
+  : defaultSlides
+
 export default function App() {
-  const [slides, setSlides] = useState(defaultSlides)
+  const [slides, setSlides] = useState(initialSlides)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [locked, setLocked] = useState(true)
 
