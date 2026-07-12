@@ -122,16 +122,26 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-100 text-gray-900 overflow-hidden">
-      <Toolbar
-        onAddSlide={addSlide}
-        onDuplicateSlide={duplicateCurrentSlide}
-        onDeleteSlide={deleteCurrentSlide}
-        onExport={exportJSON}
-        onImport={importJSON}
-        slideCount={slides.length}
-        locked={locked}
-        onToggleLock={() => setLocked((v) => !v)}
-      />
+      {!locked ? (
+        <Toolbar
+          onAddSlide={addSlide}
+          onDuplicateSlide={duplicateCurrentSlide}
+          onDeleteSlide={deleteCurrentSlide}
+          onExport={exportJSON}
+          onImport={importJSON}
+          slideCount={slides.length}
+          locked={locked}
+          onToggleLock={() => setLocked((v) => !v)}
+        />
+      ) : (
+        <button
+          onClick={() => setLocked(false)}
+          className="absolute top-3 right-4 z-50 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-400 border border-gray-200 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          title="Unlock to edit"
+        >
+          🔒 Locked
+        </button>
+      )}
 
       <div className="flex-1 overflow-hidden">
         <SlideView
