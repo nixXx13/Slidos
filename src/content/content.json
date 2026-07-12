@@ -372,9 +372,11 @@
         "id": "swn228gi",
         "type": "code",
         "language": "react",
-        "code": "export default function App() {\n  const [count, setCount] = useState(0);\n\n  useEffect(() => {\n    console.log(`count changed to ${count}`);\n  }, [count]);\n\n  const handleClick = (count) => {\n    console.log(`setting count to ${count + 1}`);\n    setCount(count + 1)\n  }\n\n  console.log(`rendering button with ${count}`);\n  return (\n    <div>\n      <h3> Clicks counter! </h3>\n\n      <button \n        onClick={() => handleClick(count)}\n      >\n        {`I've been clicked ${count} time(s)`}\n      </button>\n    </div>\n  );\n}",
+        "code": "export default function ClickCounter() {\n  const [clickCount, setClickCount] = useState(0);\n\n  useEffect(() => {\n    console.log(`clickCount changed to ${clickCount}`);\n  }, [clickCount]);\n\n  const handleClick = (count) => {\n    console.log(`setting clickCount to ${clickCount + 1}`);\n    setClickCount(clickCount + 1)\n  }\n\n  console.log(`rendering button with ${clickCount}`);\n  return (\n    <div>\n      <h3> Let's count clicks!! </h3>\n\n      <button \n        onClick={() => handleClick(clickCount)}\n      >\n        {`I've been clicked ${clickCount} time(s)`}\n      </button>\n    </div>\n  );\n}",
         "collapsed": false,
-        "editorHeight": 481
+        "editorHeight": 481,
+        "splitPercent": 67.14108910891089,
+        "consoleHeight": 347
       },
       {
         "id": "uv1foh2u",

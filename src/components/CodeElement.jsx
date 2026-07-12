@@ -25,8 +25,8 @@ export default function CodeElement({ element, locked, onUpdate }) {
   const [running, setRunning] = useState(false)
   const [previewSrc, setPreviewSrc] = useState('')
   const [logs, setLogs] = useState([])
-  const [splitPercent, setSplitPercent] = useState(50)
-  const [consoleHeight, setConsoleHeight] = useState(120)
+  const [splitPercent, setSplitPercent] = useState(element.splitPercent ?? 50)
+  const [consoleHeight, setConsoleHeight] = useState(element.consoleHeight ?? 120)
   const [editorHeight, setEditorHeight] = useState(element.editorHeight ?? 130)
   const iframeRef = useRef(null)
   const logsEndRef = useRef(null)
@@ -41,34 +41,42 @@ export default function CodeElement({ element, locked, onUpdate }) {
     const container = splitContainerRef.current
     if (!container) return
     const { left, width } = container.getBoundingClientRect()
+    const snapElement = element
+    let lastPct = splitPercent
 
     const onMove = (e) => {
-      const pct = Math.min(80, Math.max(20, ((e.clientX - left) / width) * 100))
-      setSplitPercent(pct)
+      lastPct = Math.min(80, Math.max(20, ((e.clientX - left) / width) * 100))
+      setSplitPercent(lastPct)
     }
     const onUp = () => {
+      onUpdate({ ...snapElement, splitPercent: lastPct })
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
-  }, [])
+  }, [element, splitPercent, onUpdate])
 
   const onConsoleDragStart = useCallback((e) => {
     e.preventDefault()
     const startY = e.clientY
     const startConsoleHeight = consoleHeight
+    const snapElement = element
+    let lastHeight = consoleHeight
+
     const onMove = (e) => {
       const delta = startY - e.clientY
-      setConsoleHeight(Math.min(editorHeight - 60, Math.max(32, startConsoleHeight + delta)))
+      lastHeight = Math.min(editorHeight - 60, Math.max(32, startConsoleHeight + delta))
+      setConsoleHeight(lastHeight)
     }
     const onUp = () => {
+      onUpdate({ ...snapElement, consoleHeight: lastHeight })
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
-  }, [consoleHeight, editorHeight])
+  }, [consoleHeight, editorHeight, element, onUpdate])
   const { loading: pyLoading, runPython } = usePyodide()
 
   const isReact = element.language === 'react'
