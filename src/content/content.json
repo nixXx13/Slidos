@@ -1,14 +1,8 @@
 [
   {
     "id": "gysypuam",
-    "title": "Welcome to OverReact",
-    "elements": [
-      {
-        "id": "229jt28b",
-        "type": "text",
-        "content": "Interactive slides powered by React.\n\n→  Arrow keys to navigate between slides\n🔒  Click the lock icon on any element to edit it\n+   Hover the bottom of a slide to add elements"
-      }
-    ]
+    "title": "React - intro and beyond",
+    "elements": []
   },
   {
     "id": "scdc7waj",
@@ -166,7 +160,7 @@
         "language": "javascript",
         "code": "function createBankAccount(initialBalance) {\n  let balance = initialBalance; // Private variable\n\n  return {\n    deposit: (amount) => {\n      balance += amount;\n      return balance;\n    },\n    withdraw: (amount) => {\n      if (amount > balance) return \"Insufficient funds\";\n      balance -= amount;\n      return balance;\n    },\n    checkBalance: () => balance\n  };\n}\n\nconst myAccount = createBankAccount(1000);\nconsole.log(myAccount.deposit(500)); \nconsole.log(myAccount.balance);      ",
         "collapsed": false,
-        "editorHeight": 376
+        "editorHeight": 383
       },
       {
         "id": "yvoldutt",
@@ -376,7 +370,7 @@
         "collapsed": false,
         "editorHeight": 481,
         "splitPercent": 67.14108910891089,
-        "consoleHeight": 347
+        "consoleHeight": 303
       },
       {
         "id": "uv1foh2u",
@@ -464,7 +458,7 @@
         "id": "8lodmij1",
         "type": "code",
         "language": "javascript",
-        "code": "const MyReact = function() {\n  let _val // hold our state in module scope\n  return {\n    render(Component) {\n      const Comp = Component()\n      Comp.render()\n      return Comp\n    },\n    useState(initialValue) {\n      const innerVal = _val || initialValue // assign anew every run\n      function setState(newVal) {\n        _val = newVal\n      }\n      return [innerVal, setState]\n    }\n  }\n}\nmyReact = MyReact()\n\n\n\n\nfunction Counter() {\n  const [count, setCount] = myReact.useState(0)\n  return {\n    click: () => setCount(count + 1),\n    render: () => console.log(`rendered count ${count}` )\n  }\n}\n\nlet App\nApp = myReact.render(Counter) // render: { count: 0 }\nApp.click()\nApp = myReact.render(Counter) // render: { count: 1 }\n\n\n",
+        "code": "const MyReact = function() {\n  let _val // hold our state in module scope\n  return {\n    render(Component) {\n      const Comp = Component()\n      Comp.render()\n      return Comp\n    },\n    useState(initialValue) {\n      const innerVal = _val || initialValue // assign anew every run\n      function setState(newVal) {\n        _val = newVal\n      }\n      return [innerVal, setState]\n    }\n  }\n}\nmyReact = MyReact()\n\n\n\n\nfunction Counter() {\n  const [count, setCount] = myReact.useState(0)\n  return {\n    click: () => setCount(count + 1),\n    render: () => console.log(`rendered count ${count}` )\n  }\n}\n\nlet App\nApp = myReact.render(Counter) \nApp.click()\nApp = myReact.render(Counter) \n\n\n",
         "collapsed": false,
         "editorHeight": 282
       }
